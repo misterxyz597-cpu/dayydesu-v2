@@ -518,16 +518,34 @@ def api_get_history():
 def api_add_history():
     uid = get_user_id()
     body = request.get_json() or {}
-    episode_id   = body.get('episode_id')
-    episode_title = body.get('episode_title', '')
-    anime_id     = body.get('anime_id', '')
-    anime_title  = body.get('anime_title', '')
-    poster       = body.get('poster', '')
+    episode_id    = body.get('episode_id', '').strip()
+    episode_title = body.get('episode_title', '').strip()
+    # anime_id dikirim langsung dari frontend (data.animeId dari API episode)
+    anime_id      = body.get('anime_id', '').strip()
+    anime_title   = body.get('anime_title', '').strip()
+    poster        = body.get('poster', '').strip()
+
     if not episode_id:
         return jsonify({'status': 'error', 'message': 'episode_id required'}), 400
+
+    # Auto-fetch poster & anime_title dari API /anime/{animeId}
+    # karena API episode tidak mengembalikan poster
+    if anime_id and (not poster or not anime_title):
+        try:
+            anime_data = fetch_api(f'/anime/anime/{anime_id}', 'anime')
+            if anime_data and anime_data.get('status') == 'success':
+                d = anime_data.get('data', {})
+                if not anime_title:
+                    anime_title = d.get('title', '')
+                if not poster:
+                    poster = d.get('poster', '')
+        except Exception as e:
+            print(f"Failed to fetch anime data for history: {e}")
+
     if uid not in USER_HISTORY:
         USER_HISTORY[uid] = []
-    # Remove duplicate
+
+    # Remove duplicate episode
     USER_HISTORY[uid] = [h for h in USER_HISTORY[uid] if h.get('episode_id') != episode_id]
     USER_HISTORY[uid].insert(0, {
         'episode_id':    episode_id,
@@ -537,7 +555,7 @@ def api_add_history():
         'poster':        poster,
         'watched_at':    datetime.now().strftime('%Y-%m-%d %H:%M')
     })
-    USER_HISTORY[uid] = USER_HISTORY[uid][:100]  # max 100
+    USER_HISTORY[uid] = USER_HISTORY[uid][:100]
     return jsonify({'status': 'success'})
 
 @app.route('/api/history/clear', methods=['POST'])
