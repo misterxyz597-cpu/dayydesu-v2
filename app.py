@@ -606,6 +606,48 @@ def api_delete_comment(anime_id):
         USER_COMMENTS[anime_id] = [c for c in USER_COMMENTS[anime_id] if c.get('user_sub') != user.get('sub')]
     return jsonify({'status': 'success'})
 
+
+# ============ PROFILE ============
+@app.route('/profile')
+@login_required
+def profile_page():
+    uid  = get_user_id()
+    user = session.get('user')
+
+    history = USER_HISTORY.get(uid, [])
+
+    # Kumpulkan semua komentar user dari semua anime
+    my_comments = []
+    for anime_id, comments in USER_COMMENTS.items():
+        for c in comments:
+            if c.get('user_sub') == uid:
+                my_comments.append({**c, 'anime_id': anime_id})
+    my_comments.sort(key=lambda x: x.get('posted_at', ''), reverse=True)
+
+    # Statistik
+    total_watched  = len(history)
+    avg_rating     = 0
+    rated_comments = [c for c in my_comments if c.get('rating', 0) > 0]
+    if rated_comments:
+        avg_rating = round(sum(c['rating'] for c in rated_comments) / len(rated_comments), 1)
+
+    # Anime unik yang ditonton
+    unique_anime = list({h['anime_id']: h for h in history if h.get('anime_id')}.values())
+
+    stats = {
+        'total_watched':  total_watched,
+        'total_anime':    len(unique_anime),
+        'total_comments': len(my_comments),
+        'avg_rating':     avg_rating,
+    }
+
+    return render_template('profile.html',
+        user=user,
+        history=history[:6],       # 6 terbaru
+        my_comments=my_comments,
+        stats=stats
+    )
+
 # Vercel needs this
 if __name__ == '__main__':
     app.run(debug=True)
