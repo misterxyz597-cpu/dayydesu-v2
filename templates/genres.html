@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Genres - DAYYdesu{% endblock %}
+
+{% block extra_css %}
+<style>
+    .genres-container {
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+    
+    .genres-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    
+    .section-title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0;
+    }
+    
+    .section-accent {
+        width: 5px;
+        height: 2.375rem;
+        background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+        border-radius: 3px;
+        margin-right: 1.125rem;
+    }
+    
+    .section-title {
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+    
+    .genres-subtitle {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        margin-top: 0.5rem;
+    }
+    
+    .genres-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.25rem;
+    }
+    
+    .genre-card {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 2.25rem 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-color);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .genre-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        transform: scaleX(0);
+        transition: var(--transition);
+    }
+    
+    .genre-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
+        opacity: 0;
+        transition: var(--transition);
+    }
+    
+    .genre-card:hover::before {
+        transform: scaleX(1);
+    }
+    
+    .genre-card:hover::after {
+        opacity: 1;
+    }
+    
+    .genre-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 32px rgba(59, 130, 246, 0.25);
+        border-color: var(--primary-color);
+    }
+    
+    .genre-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+        transition: var(--transition);
+    }
+    
+    .genre-card:hover .genre-icon {
+        transform: scale(1.15) rotate(5deg);
+    }
+    
+    .genre-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        position: relative;
+        z-index: 1;
+    }
+    
+    @media (max-width: 1024px) {
+        .section-accent {
+            height: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.625rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .genres-grid {
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1rem;
+        }
+        
+        .genre-card {
+            padding: 2rem 1rem;
+        }
+        
+        .genre-icon {
+            font-size: 2.5rem;
+        }
+        
+        .genre-name {
+            font-size: 0.95rem;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+        }
+        
+        .section-accent {
+            height: 1.875rem;
+            margin-right: 0.875rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .genres-grid {
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+        }
+        
+        .section-accent {
+            height: 1.625rem;
+            width: 4px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="genres-container">
+    <div class="genres-header">
+        <div class="section-header">
+            <div class="section-title-wrapper">
+                <div class="section-accent"></div>
+                <h1 class="section-title">All Anime Genres</h1>
+            </div>
+        </div>
+        <p class="genres-subtitle">Explore anime by your favorite genres</p>
+    </div>
+    
+    {% if data and data.status == 'success' %}
+        <div class="genres-grid">
+            {% for genre in data.data.genreList %}
+            <div class="genre-card" onclick="goToGenre('{{ genre.genreId }}')">
+                <span class="genre-icon">
+                    {% if genre.title == 'Action' %}⚔️
+                    {% elif genre.title == 'Adventure' %}🗺️
+                    {% elif genre.title == 'Comedy' %}😂
+                    {% elif genre.title == 'Demons' %}👹
+                    {% elif genre.title == 'Drama' %}🎭
+                    {% elif genre.title == 'Ecchi' %}💋
+                    {% elif genre.title == 'Fantasy' %}🔮
+                    {% elif genre.title == 'Game' %}🎮
+                    {% elif genre.title == 'Harem' %}💕
+                    {% elif genre.title == 'Historical' %}🏛️
+                    {% elif genre.title == 'Horror' %}👻
+                    {% elif genre.title == 'Josei' %}👩
+                    {% elif genre.title == 'Magic' %}✨
+                    {% elif genre.title == 'Martial Arts' %}🥋
+                    {% elif genre.title == 'Mecha' %}🤖
+                    {% elif genre.title == 'Military' %}🎖️
+                    {% elif genre.title == 'Music' %}🎵
+                    {% elif genre.title == 'Mystery' %}🔍
+                    {% elif genre.title == 'Psychological' %}🧠
+                    {% elif genre.title == 'Parody' %}🤪
+                    {% elif genre.title == 'Police' %}👮
+                    {% elif genre.title == 'Romance' %}❤️
+                    {% elif genre.title == 'Samurai' %}⚔️
+                    {% elif genre.title == 'School' %}🏫
+                    {% elif genre.title == 'Sci-Fi' %}🚀
+                    {% elif genre.title == 'Seinen' %}👨
+                    {% elif genre.title == 'Shoujo' %}👧
+                    {% elif genre.title == 'Shoujo Ai' %}💖
+                    {% elif genre.title == 'Shounen' %}👦
+                    {% elif genre.title == 'Slice of Life' %}🌸
+                    {% elif genre.title == 'Sports' %}⚽
+                    {% elif genre.title == 'Space' %}🌌
+                    {% elif genre.title == 'Super Power' %}⚡
+                    {% elif genre.title == 'Supernatural' %}🌙
+                    {% elif genre.title == 'Thriller' %}😱
+                    {% elif genre.title == 'Vampire' %}🧛
+                    {% else %}🎬
+                    {% endif %}
+                </span>
+                <div class="genre-name">{{ genre.title }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="error">
+            <h3><i class="fas fa-exclamation-triangle"></i> Error Loading Genres</h3>
+            <p>{{ data.message if data else 'Unable to fetch genres data. Please try again later.' }}</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

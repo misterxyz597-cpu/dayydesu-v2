@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block title %}Batch Download - {{ data.data.title if data and data.status == 'success' else 'Anime' }} - DAYYdesu{% endblock %}
+
+{% block extra_css %}
+<style>
+    .batch-container {
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+    
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1.5rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin-bottom: 2rem;
+    }
+    
+    .back-btn:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        transform: translateX(-5px);
+    }
+    
+    .batch-hero {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2.5rem;
+        border: 1px solid var(--border-color);
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 2.5rem;
+    }
+    
+    .batch-poster {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border-color);
+    }
+    
+    .batch-poster img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+    
+    .batch-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+    
+    .batch-title {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1.2;
+        color: var(--text-primary);
+    }
+    
+    .batch-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+    
+    .batch-meta-item {
+        background: rgba(59, 130, 246, 0.08);
+        padding: 1rem;
+        border-radius: 10px;
+        text-align: center;
+        border: 1px solid rgba(59, 130, 246, 0.15);
+        transition: all 0.3s ease;
+    }
+    
+    .batch-meta-item:hover {
+        background: rgba(59, 130, 246, 0.12);
+        border-color: var(--primary-color);
+    }
+    
+    .batch-meta-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+    
+    .batch-meta-value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    
+    .format-section {
+        margin-bottom: 3rem;
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.875rem;
+    }
+    
+    .section-title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0;
+    }
+    
+    .section-accent {
+        width: 5px;
+        height: 2.375rem;
+        background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+        border-radius: 3px;
+        margin-right: 1.125rem;
+    }
+    
+    .format-title {
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .format-title i {
+        color: var(--primary-color);
+    }
+    
+    .quality-section-batch {
+        margin-bottom: 2rem;
+    }
+    
+    .quality-section-batch:last-child {
+        margin-bottom: 0;
+    }
+    
+    .quality-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        padding: 1.25rem 1.75rem;
+        border-radius: 10px;
+        margin-bottom: 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .quality-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: white;
+    }
+    
+    .quality-size {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 0.5rem 1.125rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 700;
+    }
+    
+    .download-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 0.875rem;
+    }
+    
+    .download-btn {
+        padding: 1rem 1.25rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border-radius: 10px;
+        color: white;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.625rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .download-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    }
+    
+    .download-btn i {
+        font-size: 0.95rem;
+    }
+    
+    @media (max-width: 1024px) {
+        .section-accent {
+            height: 2rem;
+        }
+        
+        .format-title {
+            font-size: 1.625rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .batch-hero {
+            grid-template-columns: 1fr;
+            padding: 1.5rem;
+        }
+        
+        .batch-title {
+            font-size: 1.5rem;
+        }
+        
+        .download-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .section-accent {
+            height: 1.875rem;
+            margin-right: 0.875rem;
+        }
+        
+        .format-title {
+            font-size: 1.5rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .batch-hero {
+            padding: 1.25rem;
+        }
+        
+        .batch-title {
+            font-size: 1.25rem;
+        }
+        
+        .section-accent {
+            height: 1.625rem;
+            width: 4px;
+        }
+        
+        .format-title {
+            font-size: 1.25rem;
+        }
+        
+        .quality-header {
+            padding: 1rem 1.25rem;
+            flex-direction: column;
+            gap: 0.75rem;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="batch-container">
+    <a href="javascript:history.back()" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+        Back
+    </a>
+    
+    {% if data and data.status == 'success' %}
+        {% set batch = data.data %}
+        
+        <div class="batch-hero">
+            <div class="batch-poster">
+                <img src="{{ batch.poster }}" alt="{{ batch.title }}">
+            </div>
+            
+            <div class="batch-info">
+                <h1 class="batch-title">{{ batch.title }}</h1>
+                
+                {% if batch.japanese %}
+                <p style="font-size: 1rem; color: var(--text-secondary); font-weight: 500;">{{ batch.japanese }}</p>
+                {% endif %}
+                
+                <div class="batch-meta-grid">
+                    {% if batch.type %}
+                    <div class="batch-meta-item">
+                        <div class="batch-meta-label">Type</div>
+                        <div class="batch-meta-value">{{ batch.type }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if batch.score %}
+                    <div class="batch-meta-item">
+                        <div class="batch-meta-label">Score</div>
+                        <div class="batch-meta-value">⭐ {{ batch.score }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if batch.episodes %}
+                    <div class="batch-meta-item">
+                        <div class="batch-meta-label">Episodes</div>
+                        <div class="batch-meta-value">{{ batch.episodes }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if batch.duration %}
+                    <div class="batch-meta-item">
+                        <div class="batch-meta-label">Duration</div>
+                        <div class="batch-meta-value">{{ batch.duration }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if batch.studios %}
+                    <div class="batch-meta-item">
+                        <div class="batch-meta-label">Studio</div>
+                        <div class="batch-meta-value">{{ batch.studios }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if batch.genreList %}
+                <div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.875rem; font-weight: 600;">GENRES</div>
+                    <div class="genre-list">
+                        {% for genre in batch.genreList %}
+                        <span class="genre-tag">{{ genre.title }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if batch.downloadUrl and batch.downloadUrl.formats %}
+            {% for format in batch.downloadUrl.formats %}
+            <div class="format-section">
+                <div class="section-header">
+                    <div class="section-title-wrapper">
+                        <div class="section-accent"></div>
+                        <h2 class="format-title">
+                            <i class="fas fa-archive"></i>
+                            {{ format.title }}
+                        </h2>
+                    </div>
+                </div>
+                
+                {% for quality in format.qualities %}
+                <div class="quality-section-batch">
+                    <div class="quality-header">
+                        <div class="quality-name">{{ quality.title }}</div>
+                        <div class="quality-size">{{ quality.size }}</div>
+                    </div>
+                    
+                    <div class="download-grid">
+                        {% for url in quality.urls %}
+                        <a href="{{ url.url }}" class="download-btn" target="_blank" rel="noopener noreferrer">
+                            <i class="fas fa-download"></i>
+                            {{ url.title }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="error">
+                <h3><i class="fas fa-info-circle"></i> No Download Links Available</h3>
+                <p>Batch download for this anime is not available yet.</p>
+            </div>
+        {% endif %}
+        
+    {% else %}
+        <div class="error">
+            <h3><i class="fas fa-exclamation-triangle"></i> Error Loading Batch Download</h3>
+            <p>{{ data.message if data else 'Unable to fetch batch download data. Please try again later.' }}</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

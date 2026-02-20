@@ -1,0 +1,669 @@
+{% extends "base.html" %}
+
+{% block title %}Home - DAYYdesu{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+    /* ══════════════════════════════════════════
+       FUTURISTIC CYBER THEME — HOME PAGE
+       Konsisten dengan detail.html
+    ══════════════════════════════════════════ */
+
+    /* ── DESIGN TOKENS (dark mode default) ── */
+    :root {
+        --c-cyan:       #40c8ff;
+        --c-purple:     #8855ff;
+        --c-cyan-08:    rgba(64, 200, 255, 0.08);
+        --c-cyan-12:    rgba(64, 200, 255, 0.12);
+        --c-cyan-20:    rgba(64, 200, 255, 0.20);
+        --c-cyan-35:    rgba(64, 200, 255, 0.35);
+        --c-bg:         #060b16;
+        --c-card:       #0a1020;
+        --c-elevated:   #0e1628;
+        --c-grid:       rgba(64, 200, 255, 0.045);
+        --c-text:       #d8eeff;
+        --c-text-dim:   rgba(160, 200, 230, 0.55);
+        --c-border:     rgba(64, 200, 255, 0.18);
+        --font-hud:     'Rajdhani', sans-serif;
+        --font-body:    'Exo 2', sans-serif;
+    }
+
+    /* ── LIGHT THEME OVERRIDES ── */
+    body.light-theme {
+        --c-cyan:       #0090cc;
+        --c-purple:     #6633cc;
+        --c-cyan-08:    rgba(0, 144, 204, 0.07);
+        --c-cyan-12:    rgba(0, 144, 204, 0.10);
+        --c-cyan-20:    rgba(0, 144, 204, 0.18);
+        --c-cyan-35:    rgba(0, 144, 204, 0.32);
+        --c-bg:         #f0f4f8;
+        --c-card:       #ffffff;
+        --c-elevated:   #e8edf4;
+        --c-grid:       rgba(0, 144, 204, 0.06);
+        --c-text:       #0d1f35;
+        --c-text-dim:   rgba(30, 60, 100, 0.50);
+        --c-border:     rgba(0, 144, 204, 0.20);
+    }
+
+    /* Reset content wrapper padding */
+    .content-wrapper {
+        padding: 0;
+        padding-bottom: 2rem;
+        font-family: var(--font-body);
+    }
+
+    /* ══════════════════════════════════════════
+       HERO SLIDER
+    ══════════════════════════════════════════ */
+    .hero-slider {
+        position: relative;
+        width: 100%;
+        height: 280px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+        background: var(--c-card);
+    }
+
+    .slider-wrapper {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+
+    .slide {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transition: opacity 0.8s ease-in-out;
+        display: none;
+    }
+
+    .slide.active {
+        opacity: 1;
+        display: block;
+    }
+
+    .slide-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    /* Cyber overlay gradient */
+    .slide-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(
+            to top,
+            rgba(6, 11, 22, 0.92) 0%,
+            rgba(6, 11, 22, 0.55) 45%,
+            rgba(6, 11, 22, 0.20) 100%
+        );
+    }
+
+    /* Scanline grid over hero */
+    .slide-overlay::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(var(--c-grid) 1px, transparent 1px),
+            linear-gradient(90deg, var(--c-grid) 1px, transparent 1px);
+        background-size: 44px 44px;
+        pointer-events: none;
+    }
+
+    body.light-theme .slide-overlay {
+        background: linear-gradient(
+            to top,
+            rgba(240, 244, 248, 0.88) 0%,
+            rgba(240, 244, 248, 0.40) 50%,
+            rgba(240, 244, 248, 0.10) 100%
+        );
+    }
+
+    .slide-content {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        padding: 1.25rem;
+        z-index: 2;
+    }
+
+    .slide-badges {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .badge-tv,
+    .badge-episode {
+        background: var(--c-cyan-12);
+        color: var(--c-cyan);
+        border: 1px solid var(--c-border);
+        padding: 0.2rem 0.6rem;
+        border-radius: 3px;
+        font-family: var(--font-hud);
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+    }
+
+    .slide-title {
+        font-family: var(--font-hud);
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: var(--c-text);
+        margin-bottom: 0.875rem;
+        line-height: 1.2;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        letter-spacing: 0.5px;
+        text-shadow: 0 0 20px rgba(64,200,255,0.2);
+    }
+
+    body.light-theme .slide-title {
+        text-shadow: none;
+    }
+
+    /* Watch Now CTA — matches btn-play from detail.html */
+    .watch-now-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: transparent;
+        color: var(--c-cyan);
+        border: 1px solid var(--c-cyan);
+        padding: 0.625rem 1.375rem;
+        border-radius: 4px;
+        font-family: var(--font-hud);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 16px rgba(64,200,255,0.15), inset 0 0 16px rgba(64,200,255,0.04);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .watch-now-btn::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: var(--c-cyan-12);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+    }
+
+    .watch-now-btn:hover::before { transform: scaleX(1); }
+    .watch-now-btn:hover {
+        box-shadow: 0 0 28px rgba(64,200,255,0.35), inset 0 0 20px rgba(64,200,255,0.1);
+    }
+    .watch-now-btn i { position: relative; z-index: 1; }
+    .watch-now-btn span { position: relative; z-index: 1; }
+
+    /* Slider Indicators */
+    .slider-indicators {
+        position: absolute;
+        bottom: 1rem;
+        right: 1rem;
+        display: flex;
+        gap: 0.375rem;
+        z-index: 3;
+    }
+
+    .slider-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(64, 200, 255, 0.35);
+        border: 1px solid var(--c-border);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    body.light-theme .slider-dot {
+        background: rgba(0, 144, 204, 0.35);
+    }
+
+    .slider-dot.active {
+        width: 20px;
+        border-radius: 3px;
+        background: var(--c-cyan);
+        box-shadow: 0 0 8px rgba(64,200,255,0.5);
+    }
+
+    body.light-theme .slider-dot.active {
+        background: var(--c-cyan);
+    }
+
+    /* ══════════════════════════════════════════
+       SECTION HEADER — matches detail.html
+    ══════════════════════════════════════════ */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        padding: 0 1rem;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.65rem;
+        border-bottom: 1px solid var(--c-border);
+    }
+
+    .section-title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0;
+    }
+
+    .section-accent {
+        width: 4px;
+        height: 1.75rem;
+        background: linear-gradient(to bottom, var(--c-cyan), var(--c-purple));
+        border-radius: 2px;
+        margin-right: 1rem;
+        box-shadow: 0 0 8px rgba(64,200,255,0.35);
+        flex-shrink: 0;
+    }
+
+    .section-title {
+        font-family: var(--font-hud);
+        font-size: 1.125rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--c-text);
+        margin: 0;
+    }
+
+    /* ══════════════════════════════════════════
+       ANIME SECTION
+    ══════════════════════════════════════════ */
+    .anime-section {
+        margin-bottom: 2.5rem;
+    }
+
+    /* ── ANIME GRID ── */
+    .anime-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        padding: 0 0.75rem;
+    }
+
+    /* ── ANIME CARD — cyber style ── */
+    .anime-card {
+        background: var(--c-card);
+        border-radius: 4px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 1px solid var(--c-border);
+        position: relative;
+    }
+
+    /* Corner bracket top-left */
+    .anime-card::before {
+        content: '';
+        position: absolute;
+        top: 5px; left: 5px;
+        width: 10px; height: 10px;
+        border-top: 1.5px solid var(--c-cyan);
+        border-left: 1.5px solid var(--c-cyan);
+        z-index: 3;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    /* Corner bracket bottom-right */
+    .anime-card::after {
+        content: '';
+        position: absolute;
+        bottom: 5px; right: 5px;
+        width: 10px; height: 10px;
+        border-bottom: 1.5px solid var(--c-cyan);
+        border-right: 1.5px solid var(--c-cyan);
+        z-index: 3;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .anime-card:hover::before,
+    .anime-card:hover::after { opacity: 1; }
+
+    .anime-card:hover {
+        transform: translateY(-4px);
+        box-shadow:
+            0 0 0 1px var(--c-border),
+            0 12px 32px rgba(0,0,0,0.5),
+            0 0 20px rgba(64,200,255,0.12);
+        border-color: rgba(64,200,255,0.35);
+    }
+
+    body.light-theme .anime-card:hover {
+        box-shadow:
+            0 0 0 1px var(--c-border),
+            0 8px 20px rgba(0,144,204,0.12);
+    }
+
+    .anime-poster {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .anime-poster img {
+        width: 100%;
+        aspect-ratio: 2/3;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.35s ease;
+    }
+
+    .anime-card:hover .anime-poster img {
+        transform: scale(1.06);
+    }
+
+    /* Type badge — top-left */
+    .anime-badge {
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+        background: rgba(6, 11, 22, 0.88);
+        color: var(--c-cyan);
+        border: 1px solid var(--c-border);
+        backdrop-filter: blur(8px);
+        padding: 0.2rem 0.5rem;
+        border-radius: 3px;
+        font-family: var(--font-hud);
+        font-size: 0.6rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        z-index: 2;
+    }
+
+    body.light-theme .anime-badge {
+        background: rgba(240, 244, 248, 0.88);
+    }
+
+    /* Episode/score badge — bottom-right */
+    .episode-badge {
+        position: absolute;
+        bottom: 0.5rem;
+        right: 0.5rem;
+        background: rgba(6, 11, 22, 0.88);
+        color: var(--c-text);
+        border: 1px solid var(--c-border);
+        backdrop-filter: blur(8px);
+        padding: 0.2rem 0.5rem;
+        border-radius: 3px;
+        font-family: var(--font-hud);
+        font-size: 0.6rem;
+        font-weight: 700;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    body.light-theme .episode-badge {
+        background: rgba(240, 244, 248, 0.88);
+    }
+
+    .episode-badge i {
+        color: var(--c-cyan);
+        font-size: 0.65rem;
+    }
+
+    /* Star icon for score badges */
+    .episode-badge .fa-star {
+        color: #f59e0b;
+        filter: drop-shadow(0 0 3px rgba(245,158,11,0.4));
+    }
+
+    .anime-info {
+        padding: 0.65rem 0.75rem;
+        background: var(--c-card);
+    }
+
+    .anime-title {
+        font-family: var(--font-hud);
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--c-text);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.3;
+        min-height: 2rem;
+        letter-spacing: 0.3px;
+        transition: color 0.2s ease;
+    }
+
+    .anime-card:hover .anime-title {
+        color: var(--c-cyan);
+    }
+
+    /* Error state */
+    .error {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--c-text);
+        font-family: var(--font-hud);
+    }
+
+    .error h3 {
+        color: var(--c-cyan);
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    .error p {
+        color: var(--c-text-dim);
+    }
+
+    /* ══════════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════════ */
+    @media (min-width: 640px) {
+        .hero-slider { height: 320px; }
+
+        .anime-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            padding: 0 1rem;
+        }
+
+        .section-title { font-size: 1.25rem; }
+        .section-header { padding: 0 1rem; }
+    }
+
+    @media (min-width: 768px) {
+        .hero-slider { height: 360px; }
+
+        .slide-content { padding: 1.75rem; }
+        .slide-title { font-size: 1.75rem; }
+
+        .anime-grid { grid-template-columns: repeat(4, 1fr); }
+        .section-title { font-size: 1.35rem; }
+    }
+
+    @media (min-width: 1024px) {
+        .hero-slider { height: 420px; }
+
+        .slide-content { padding: 2.25rem; }
+        .slide-title { font-size: 2.25rem; }
+
+        .anime-grid {
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.25rem;
+            padding: 0 1.25rem;
+        }
+
+        .section-title { font-size: 1.5rem; }
+        .section-header { padding: 0 1.25rem; }
+        .section-accent { height: 2rem; }
+    }
+
+    @media (min-width: 1280px) {
+        .anime-grid {
+            grid-template-columns: repeat(6, 1fr);
+            padding: 0 1.5rem;
+        }
+        .section-header { padding: 0 1.5rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if data and data.status == 'success' %}
+    <!-- Hero Slider Section -->
+    <section class="hero-slider">
+        <div class="slider-wrapper">
+            {% set featured_anime = data.data.ongoing.animeList[:5] %}
+            {% for anime in featured_anime %}
+            <div class="slide {% if loop.index == 1 %}active{% endif %}">
+                <img src="{{ anime.poster }}" alt="{{ anime.title }}" class="slide-image">
+                <div class="slide-overlay"></div>
+                <div class="slide-content">
+                    <div class="slide-badges">
+                        <span class="badge-tv">TV</span>
+                        <span class="badge-episode">Ep {{ anime.episodes }}</span>
+                    </div>
+                    <h1 class="slide-title">{{ anime.title }}</h1>
+                    <button class="watch-now-btn" onclick="goToAnime('{{ anime.animeId }}')">
+                        <i class="fas fa-play"></i>
+                        Watch Now
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Slider Indicators -->
+        <div class="slider-indicators">
+            {% for i in range(featured_anime|length) %}
+            <span class="slider-dot {% if loop.index == 1 %}active{% endif %}" onclick="currentSlide({{ loop.index }})"></span>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Latest Anime Updates Section -->
+    <section class="anime-section">
+        <div class="section-header">
+            <div class="section-title-wrapper">
+                <div class="section-accent"></div>
+                <h2 class="section-title">Latest Anime Updates - Subtitle Indonesia</h2>
+            </div>
+        </div>
+        <div class="anime-grid">
+            {% for anime in data.data.ongoing.animeList[:12] %}
+            <div class="anime-card" onclick="goToAnime('{{ anime.animeId }}')">
+                <div class="anime-poster">
+                    <img src="{{ anime.poster }}" alt="{{ anime.title }}" loading="lazy">
+                    <div class="anime-badge">TV</div>
+                    <div class="episode-badge">
+                        <i class="fas fa-play-circle"></i> Ep {{ anime.episodes }}
+                    </div>
+                </div>
+                <div class="anime-info">
+                    <div class="anime-title">{{ anime.title }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Completed Anime Section -->
+    <section class="anime-section">
+        <div class="section-header">
+            <div class="section-title-wrapper">
+                <div class="section-accent"></div>
+                <h2 class="section-title">Completed Anime</h2>
+            </div>
+        </div>
+        <div class="anime-grid">
+            {% for anime in data.data.completed.animeList[:12] %}
+            <div class="anime-card" onclick="goToAnime('{{ anime.animeId }}')">
+                <div class="anime-poster">
+                    <img src="{{ anime.poster }}" alt="{{ anime.title }}" loading="lazy">
+                    <div class="anime-badge">TV</div>
+                    <div class="episode-badge">
+                        <i class="fas fa-star"></i> {{ anime.score }}
+                    </div>
+                </div>
+                <div class="anime-info">
+                    <div class="anime-title">{{ anime.title }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+{% else %}
+    <div class="error">
+        <h3><i class="fas fa-exclamation-triangle"></i> Error Loading Data</h3>
+        <p>{{ data.message if data else 'Unable to fetch anime data. Please try again later.' }}</p>
+    </div>
+{% endif %}
+
+<script>
+let currentSlideIndex = 1;
+showSlide(currentSlideIndex);
+
+function changeSlide(n) {
+    showSlide(currentSlideIndex += n);
+}
+
+function currentSlide(n) {
+    showSlide(currentSlideIndex = n);
+}
+
+function showSlide(n) {
+    let slides = document.getElementsByClassName("slide");
+    let dots = document.getElementsByClassName("slider-dot");
+
+    if (n > slides.length) { currentSlideIndex = 1; }
+    if (n < 1) { currentSlideIndex = slides.length; }
+
+    for (let i = 0; i < slides.length; i++) {
+        slides[i].classList.remove("active");
+    }
+
+    for (let i = 0; i < dots.length; i++) {
+        dots[i].classList.remove("active");
+    }
+
+    if (slides[currentSlideIndex - 1]) {
+        slides[currentSlideIndex - 1].classList.add("active");
+    }
+    if (dots[currentSlideIndex - 1]) {
+        dots[currentSlideIndex - 1].classList.add("active");
+    }
+}
+
+// Auto slide every 5 seconds
+setInterval(function() {
+    changeSlide(1);
+}, 5000);
+
+function goToAnime(animeId) {
+    window.location.href = '/anime/' + animeId;
+}
+</script>
+{% endblock %}

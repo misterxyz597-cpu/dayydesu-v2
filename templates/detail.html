@@ -1,0 +1,982 @@
+{% extends "base.html" %}
+
+{% block title %}{{ data.data.title if data and data.status == 'success' else 'Anime Detail' }} - DAYYdesu{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+    /* ══════════════════════════════════════════
+       DAYYDESU — ANIME PINK THEME — DETAIL PAGE
+       Aesthetic: Shoujo · Sakura · Dark Romance
+    ══════════════════════════════════════════ */
+
+    /* ── DESIGN TOKENS ── */
+    :root {
+        --c-cyan:       #ff6eb0;
+        --c-purple:     #c0437f;
+        --c-cyan-08:    rgba(255, 110, 176, 0.08);
+        --c-cyan-12:    rgba(255, 110, 176, 0.12);
+        --c-cyan-20:    rgba(255, 110, 176, 0.20);
+        --c-cyan-35:    rgba(255, 110, 176, 0.35);
+        --c-bg:         #0d0810;
+        --c-card:       #150d18;
+        --c-elevated:   #1e1220;
+        --c-grid:       rgba(255, 110, 176, 0.035);
+        --c-text:       #fde8f2;
+        --c-text-dim:   rgba(253, 232, 242, 0.50);
+        --c-border:     rgba(255, 110, 176, 0.18);
+        --font-hud:     'Bebas Neue', sans-serif;
+        --font-body:    'Noto Sans JP', sans-serif;
+    }
+
+    /* ── LIGHT THEME OVERRIDES ── */
+    body.light-theme {
+        --c-cyan:       #d63a80;
+        --c-purple:     #a02060;
+        --c-cyan-08:    rgba(214, 58, 128, 0.07);
+        --c-cyan-12:    rgba(214, 58, 128, 0.11);
+        --c-cyan-20:    rgba(214, 58, 128, 0.18);
+        --c-cyan-35:    rgba(214, 58, 128, 0.32);
+        --c-bg:         #fff0f6;
+        --c-card:       #ffffff;
+        --c-elevated:   #ffe0ee;
+        --c-grid:       rgba(214, 58, 128, 0.05);
+        --c-text:       #2a0818;
+        --c-text-dim:   rgba(42, 8, 24, 0.50);
+        --c-border:     rgba(214, 58, 128, 0.20);
+    }
+
+    /* ══════════════════════════════════════════
+       HERO SECTION
+    ══════════════════════════════════════════ */
+    .hero-section {
+        position: relative;
+        min-height: 85vh;
+        overflow: hidden;
+        margin-left: calc(-50vw + 50%);
+        margin-right: calc(-50vw + 50%);
+        margin-top: -1.75rem;
+        margin-bottom: 3rem;
+        font-family: var(--font-body);
+    }
+
+    /* Blurred poster backdrop */
+    .hero-backdrop {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background-size: cover;
+        background-position: center top;
+        filter: blur(2px) saturate(0.6);
+        transform: scale(1.04);
+    }
+
+    /* Dark gradient overlay with subtle cyan tint at bottom */
+    .hero-backdrop::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            to bottom,
+            rgba(13, 8, 16, 0.72) 0%,
+            rgba(13, 8, 16, 0.85) 45%,
+            rgba(13, 8, 16, 0.96) 75%,
+            rgba(13, 8, 16, 1)    100%
+        );
+    }
+
+    /* Scanline texture over hero */
+    .hero-backdrop::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(var(--c-grid) 1px, transparent 1px),
+            linear-gradient(90deg, var(--c-grid) 1px, transparent 1px);
+        background-size: 44px 44px;
+        pointer-events: none;
+    }
+
+    /* Light mode: softer overlay */
+    body.light-theme .hero-backdrop::before {
+        background: linear-gradient(
+            to bottom,
+            rgba(255, 240, 246, 0.55) 0%,
+            rgba(255, 240, 246, 0.80) 50%,
+            rgba(255, 240, 246, 0.97) 80%,
+            rgba(255, 240, 246, 1)    100%
+        );
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 6rem 3rem 3rem;
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 3rem;
+        align-items: start;
+    }
+
+    /* ── POSTER ── */
+    .poster-container {
+        position: sticky;
+        top: 100px;
+    }
+
+    .poster-wrapper {
+        position: relative;
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid var(--c-border);
+        box-shadow:
+            0 0 0 1px rgba(255,110,176,0.08),
+            0 20px 60px rgba(0, 0, 0, 0.55),
+            0 0 30px rgba(255,110,176,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .poster-wrapper:hover {
+        transform: translateY(-5px);
+        box-shadow:
+            0 0 0 1px var(--c-border),
+            0 24px 70px rgba(0,0,0,0.6),
+            0 0 40px rgba(255,110,176,0.15);
+    }
+
+    .poster-wrapper img {
+        width: 100%;
+        display: block;
+        aspect-ratio: 2/3;
+        object-fit: cover;
+    }
+
+    /* Corner brackets on poster */
+    .poster-wrapper::before,
+    .poster-wrapper::after {
+        content: '';
+        position: absolute;
+        width: 16px; height: 16px;
+        z-index: 3; pointer-events: none;
+    }
+    .poster-wrapper::before {
+        top: 8px; left: 8px;
+        border-top: 2px solid var(--c-cyan);
+        border-left: 2px solid var(--c-cyan);
+    }
+    .poster-wrapper::after {
+        bottom: 8px; right: 8px;
+        border-bottom: 2px solid var(--c-cyan);
+        border-right: 2px solid var(--c-cyan);
+    }
+
+    .rating-badge {
+        position: absolute;
+        top: 1rem; right: 1rem;
+        background: rgba(13, 8, 16, 0.88);
+        border: 1px solid var(--c-border);
+        backdrop-filter: blur(10px);
+        padding: 0.45rem 0.875rem;
+        border-radius: 3px;
+        font-family: var(--font-hud);
+        font-weight: 700;
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        color: var(--c-text);
+        box-shadow: 0 0 12px rgba(255,110,176,0.15);
+    }
+
+    .rating-badge i {
+        color: #f59e0b;
+        font-size: 0.8rem;
+        filter: drop-shadow(0 0 4px rgba(245,158,11,0.5));
+    }
+
+    .status-badge {
+        position: absolute;
+        bottom: 1rem; left: 1rem; right: 1rem;
+        background: rgba(13, 8, 16, 0.90);
+        backdrop-filter: blur(12px);
+        padding: 0.5rem 1rem;
+        border-radius: 3px;
+        text-align: center;
+        font-family: var(--font-hud);
+        font-weight: 700;
+        font-size: 0.72rem;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+    }
+
+    .status-ongoing {
+        color: #2dd4a0;
+        border: 1px solid rgba(45, 212, 160, 0.35);
+        box-shadow: 0 0 10px rgba(45,212,160,0.15);
+    }
+
+    .status-completed {
+        color: var(--c-cyan);
+        border: 1px solid var(--c-border);
+        box-shadow: 0 0 10px rgba(255,110,176,0.12);
+    }
+
+    /* ── INFO SECTION ── */
+    .info-section {
+        padding-top: 2rem;
+        font-family: var(--font-body);
+    }
+
+    .title-section {
+        margin-bottom: 1.75rem;
+        position: relative;
+    }
+
+    /* Thin cyan left bar beside title */
+    .title-section::before {
+        content: '';
+        position: absolute;
+        left: -1.25rem; top: 0.2rem; bottom: 0.2rem;
+        width: 3px;
+        background: var(--c-cyan);
+        border-radius: 2px;
+        box-shadow: 0 0 8px rgba(255,110,176,0.4);
+    }
+
+    .anime-title {
+        font-family: var(--font-hud);
+        font-size: 2.75rem;
+        font-weight: 700;
+        line-height: 1.1;
+        margin-bottom: 0.75rem;
+        color: var(--c-text);
+        letter-spacing: 0.5px;
+        text-shadow: 0 0 30px rgba(255,110,176,0.18);
+    }
+
+    body.light-theme .anime-title { text-shadow: none; }
+
+    .anime-subtitle {
+        font-family: var(--font-hud);
+        font-size: 1rem;
+        letter-spacing: 1px;
+        color: var(--c-text-dim);
+        font-weight: 400;
+    }
+
+    /* ── META CARDS ── */
+    .meta-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1.75rem;
+    }
+
+    .meta-card {
+        background: rgba(20, 10, 24, 0.60);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--c-border);
+        border-radius: 4px;
+        padding: 1rem 0.875rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    body.light-theme .meta-card {
+        background: rgba(255,240,246,0.75);
+        backdrop-filter: blur(12px);
+    }
+
+    .meta-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 1px;
+        background: linear-gradient(90deg, transparent, var(--c-cyan), transparent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .meta-card:hover::before { opacity: 1; }
+    .meta-card:hover {
+        background: rgba(255,110,176,0.07);
+        border-color: var(--c-cyan-20);
+    }
+
+    body.light-theme .meta-card:hover {
+        background: rgba(214,58,128,0.06);
+    }
+
+    .meta-card-label {
+        font-family: var(--font-hud);
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 2.5px;
+        color: var(--c-cyan);
+        opacity: 0.65;
+        font-weight: 600;
+        margin-bottom: 0.45rem;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .meta-card-label i { font-size: 0.72rem; }
+
+    .meta-card-value {
+        font-family: var(--font-hud);
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: var(--c-text);
+    }
+
+    /* ── GENRES ── */
+    .genres-section { margin: 1.5rem 0; }
+
+    .genres-list {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .genre-badge {
+        padding: 0.35rem 0.875rem;
+        background: var(--c-cyan-08);
+        border: 1px solid var(--c-border);
+        border-radius: 3px;
+        font-family: var(--font-hud);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--c-cyan);
+        transition: all 0.25s ease;
+        cursor: default;
+    }
+
+    .genre-badge:hover {
+        background: var(--c-cyan-20);
+        border-color: var(--c-cyan);
+        box-shadow: 0 0 8px rgba(255,110,176,0.2);
+    }
+
+    /* ── ACTION BUTTONS ── */
+    .action-buttons {
+        display: flex;
+        gap: 0.875rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 0.875rem 1.75rem;
+        font-family: var(--font-hud);
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Play button — filled cyan */
+    .btn-play {
+        background: transparent;
+        color: var(--c-cyan);
+        border: 1px solid var(--c-cyan);
+        flex: 1;
+        min-width: 180px;
+        justify-content: center;
+        box-shadow: 0 0 20px rgba(255,110,176,0.15), inset 0 0 20px rgba(255,110,176,0.05);
+    }
+
+    .btn-play::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: var(--c-cyan-12);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.35s ease;
+    }
+    .btn-play:hover::before { transform: scaleX(1); }
+    .btn-play:hover {
+        box-shadow: 0 0 30px rgba(255,110,176,0.35), inset 0 0 25px rgba(255,110,176,0.1);
+        border-color: var(--c-cyan);
+    }
+    .btn-play span, .btn-play i { position: relative; z-index: 1; }
+
+    /* Bookmark & Download — ghost style */
+    .btn-bookmark,
+    .btn-download {
+        background: transparent;
+        color: var(--c-text-dim);
+        border: 1px solid var(--c-border);
+        position: relative; overflow: hidden;
+    }
+
+    .btn-bookmark::before,
+    .btn-download::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: var(--c-cyan-08);
+        transform: scaleX(0); transform-origin: left;
+        transition: transform 0.3s ease;
+    }
+    .btn-bookmark:hover::before,
+    .btn-download:hover::before { transform: scaleX(1); }
+    .btn-bookmark:hover,
+    .btn-download:hover {
+        border-color: var(--c-cyan);
+        color: var(--c-cyan);
+        box-shadow: 0 0 12px rgba(255,110,176,0.2);
+    }
+    .btn-bookmark span, .btn-bookmark i,
+    .btn-download span, .btn-download i { position: relative; z-index: 1; }
+
+    .btn-bookmark.bookmarked {
+        border-color: var(--c-cyan);
+        color: var(--c-cyan);
+        background: var(--c-cyan-12);
+    }
+
+    /* ══════════════════════════════════════════
+       CONTENT SECTION
+    ══════════════════════════════════════════ */
+    .content-section {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 0 3rem 3rem;
+        font-family: var(--font-body);
+    }
+
+    /* ── SECTION HEADERS ── */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.65rem;
+        border-bottom: 1px solid var(--c-border);
+    }
+
+    .section-accent { display: none; }
+
+    .section-title {
+        font-family: var(--font-body);
+        font-size: 1.1rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--c-text);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .section-title i {
+        color: var(--c-cyan);
+        font-size: 1.1rem;
+        filter: drop-shadow(0 0 4px var(--c-cyan));
+    }
+
+    /* ── SYNOPSIS ── */
+    .synopsis-section { margin-bottom: 3.5rem; }
+
+    .synopsis-text {
+        font-size: 0.95rem;
+        line-height: 1.85;
+        color: var(--c-text-dim);
+        max-width: 1000px;
+        letter-spacing: 0.2px;
+    }
+
+    /* ── EPISODES GRID ── */
+    .episodes-section { margin-bottom: 3.5rem; }
+
+    .episodes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .episode-item {
+        background: var(--c-card);
+        border: 1px solid var(--c-border);
+        border-radius: 4px;
+        padding: 1.1rem 0.875rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 88px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Cyan sweep from bottom on hover */
+    .episode-item::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: var(--c-cyan-08);
+        transform: scaleY(0); transform-origin: bottom;
+        transition: transform 0.25s ease;
+    }
+    .episode-item:hover::before { transform: scaleY(1); }
+
+    /* Top accent line */
+    .episode-item::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 2px;
+        background: var(--c-cyan);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+    .episode-item:hover::after { transform: scaleX(1); }
+
+    .episode-item:hover {
+        border-color: var(--c-cyan);
+        box-shadow: 0 0 14px rgba(255,110,176,0.18);
+    }
+
+    .episode-number {
+        font-family: var(--font-hud);
+        font-size: 1.05rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: var(--c-cyan);
+        margin-bottom: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        position: relative; z-index: 1;
+    }
+
+    .episode-number i {
+        font-size: 0.85rem;
+        filter: drop-shadow(0 0 3px rgba(255,110,176,0.7));
+    }
+
+    .episode-date {
+        font-family: var(--font-hud);
+        font-size: 0.65rem;
+        letter-spacing: 1px;
+        color: var(--c-text-dim);
+        line-height: 1.3;
+        position: relative; z-index: 1;
+    }
+
+    /* ── RECOMMENDATIONS ── */
+    .recommendations-section { margin-bottom: 3.5rem; }
+
+    .recommendations-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+        gap: 1.125rem;
+    }
+
+    .recommendation-item {
+        cursor: pointer;
+        background: var(--c-card);
+        border: 1px solid var(--c-border);
+        border-radius: 4px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    /* Corner brackets on recommendation cards */
+    .recommendation-item::before {
+        content: '';
+        position: absolute;
+        top: 8px; left: 8px;
+        width: 12px; height: 12px;
+        border-top: 1.5px solid var(--c-cyan);
+        border-left: 1.5px solid var(--c-cyan);
+        z-index: 3;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .recommendation-item:hover::before { opacity: 1; }
+    .recommendation-item::after {
+        content: '';
+        position: absolute;
+        bottom: calc(100% - 250px - 8px); right: 8px;
+        width: 12px; height: 12px;
+        border-bottom: 1.5px solid var(--c-cyan);
+        border-right: 1.5px solid var(--c-cyan);
+        z-index: 3;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .recommendation-item:hover::after { opacity: 1; }
+
+    .recommendation-item:hover {
+        transform: translateY(-6px);
+        border-color: var(--c-cyan);
+        box-shadow: 0 8px 28px rgba(255,110,176,0.2);
+    }
+
+    .recommendation-poster {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .recommendation-poster img {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.4s ease, filter 0.3s ease;
+        filter: saturate(0.85);
+    }
+
+    .recommendation-item:hover .recommendation-poster img {
+        transform: scale(1.07);
+        filter: saturate(1);
+    }
+
+    .recommendation-info {
+        padding: 0.875rem;
+        background: var(--c-card);
+    }
+
+    .recommendation-title {
+        font-family: var(--font-hud);
+        font-size: 0.82rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        color: var(--c-text);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        line-height: 1.4;
+        min-height: 2.3rem;
+        transition: color 0.25s ease;
+    }
+    .recommendation-item:hover .recommendation-title {
+        color: var(--c-cyan);
+    }
+
+    /* ══════════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════════ */
+    @media (max-width: 1024px) {
+        .hero-content {
+            grid-template-columns: 240px 1fr;
+            gap: 2.5rem;
+            padding: 4rem 2rem 2rem;
+        }
+        .anime-title { font-size: 2.1rem; }
+        .meta-cards { grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)); }
+        .content-section { padding: 0 2rem 2rem; }
+    }
+
+    @media (max-width: 768px) {
+        .hero-section { min-height: auto; margin-top: -1rem; }
+        .hero-content {
+            grid-template-columns: 1fr;
+            gap: 1.75rem;
+            padding: 2.5rem 1.5rem 2rem;
+        }
+        .poster-container { position: relative; top: 0; }
+        .poster-wrapper { max-width: 200px; margin: 0 auto; }
+        .title-section::before { left: -1rem; }
+        .anime-title { font-size: 1.75rem; }
+        .anime-subtitle { font-size: 0.9rem; }
+        .meta-cards { grid-template-columns: repeat(2, 1fr); gap: 0.625rem; }
+        .meta-card { padding: 0.875rem; }
+        .action-buttons { flex-direction: column; }
+        .btn { width: 100%; justify-content: center; }
+        .content-section { padding: 0 1.5rem 2rem; }
+        .section-title { font-size: 1.1rem; }
+        .section-title i { font-size: 0.95rem; }
+        .episodes-grid {
+            grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+            gap: 0.625rem;
+        }
+        .episode-item { padding: 0.875rem 0.75rem; min-height: 78px; }
+        .episode-number { font-size: 0.95rem; }
+        .recommendations-grid {
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 0.875rem;
+        }
+        .recommendation-poster img { height: 200px; }
+    }
+
+    @media (max-width: 480px) {
+        .anime-title { font-size: 1.5rem; }
+        .meta-cards { grid-template-columns: 1fr; }
+        .episodes-grid { grid-template-columns: repeat(3, 1fr); }
+        .recommendations-grid { grid-template-columns: repeat(2, 1fr); }
+        .recommendation-item::after { bottom: calc(100% - 180px - 8px); }
+        .recommendation-poster img { height: 180px; }
+    }
+</style>
+
+<!-- Share System Styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/share-system.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="detail-container" data-anime-id="{{ anime_id }}">
+    {% if data and data.status == 'success' %}
+        {% set anime = data.data %}
+        
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-backdrop" style="background-image: url('{{ anime.poster }}');"></div>
+            
+            <div class="hero-content">
+                <!-- Poster -->
+                <div class="poster-container">
+                    <div class="poster-wrapper">
+                        <img src="{{ anime.poster }}" alt="{{ anime.title }}" loading="lazy">
+                        {% if anime.score %}
+                        <div class="rating-badge">
+                            <i class="fas fa-star"></i>
+                            {{ anime.score }}
+                        </div>
+                        {% endif %}
+                        {% if anime.status %}
+                        <div class="status-badge status-{{ 'ongoing' if 'ongoing' in anime.status|lower else 'completed' }}">
+                            {{ anime.status }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Info -->
+                <div class="info-section">
+                    <div class="title-section">
+                        <h1 class="anime-title">{{ anime.title }}</h1>
+                        {% if anime.japanese %}
+                        <p class="anime-subtitle">{{ anime.japanese }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Meta Info Cards -->
+                    <div class="meta-cards">
+                        {% if anime.total_episode or anime.episodes %}
+                        <div class="meta-card">
+                            <div class="meta-card-label">
+                                <i class="fas fa-film"></i>
+                                Episodes
+                            </div>
+                            <div class="meta-card-value">
+                                {{ anime.total_episode or anime.episodes }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if anime.type %}
+                        <div class="meta-card">
+                            <div class="meta-card-label">
+                                <i class="fas fa-tv"></i>
+                                Type
+                            </div>
+                            <div class="meta-card-value">
+                                {{ anime.type }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if anime.duration %}
+                        <div class="meta-card">
+                            <div class="meta-card-label">
+                                <i class="fas fa-clock"></i>
+                                Duration
+                            </div>
+                            <div class="meta-card-value">
+                                {{ anime.duration }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if anime.studio or anime.studios %}
+                        <div class="meta-card">
+                            <div class="meta-card-label">
+                                <i class="fas fa-building"></i>
+                                Studio
+                            </div>
+                            <div class="meta-card-value">
+                                {{ anime.studio or anime.studios }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if anime.release_date or anime.aired %}
+                        <div class="meta-card">
+                            <div class="meta-card-label">
+                                <i class="fas fa-calendar"></i>
+                                Released
+                            </div>
+                            <div class="meta-card-value">
+                                {{ anime.release_date or anime.aired }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Genres -->
+                    {% if anime.genres or anime.genreList %}
+                    <div class="genres-section">
+                        <div class="genres-list">
+                            {% if anime.genres %}
+                                {% for genre in anime.genres %}
+                                <span class="genre-badge">{{ genre.name }}</span>
+                                {% endfor %}
+                            {% elif anime.genreList %}
+                                {% for genre in anime.genreList %}
+                                <span class="genre-badge">{{ genre.title }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        {% if anime.episodeList and anime.episodeList|length > 0 %}
+                        <a href="/episode/{{ anime.episodeList[0].episodeId }}" class="btn btn-play">
+                            <i class="fas fa-play"></i>
+                            Watch Now
+                        </a>
+                        {% endif %}
+                        
+                        <button class="btn btn-bookmark" id="bookmarkBtn">
+                            <i class="far fa-bookmark" id="bookmarkIcon"></i>
+                            <span id="bookmarkText">Bookmark</span>
+                        </button>
+                        
+                        {% if anime.animeId %}
+                        <a href="/batch/{{ anime.animeId }}" class="btn btn-download">
+                            <i class="fas fa-download"></i>
+                            Download
+                        </a>
+                        {% endif %}
+                        
+                        <!-- Share button will be added dynamically by share-system.js -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content Section -->
+        <section class="content-section">
+            <!-- Synopsis -->
+            {% if anime.synopsis %}
+            <div class="synopsis-section">
+                <div class="section-header">
+                    <h2 class="section-title">Synopsis</h2>
+                </div>
+                <p class="synopsis-text">
+                    {% if anime.synopsis is string %}
+                        {{ anime.synopsis }}
+                    {% elif anime.synopsis.paragraphs %}
+                        {% for para in anime.synopsis.paragraphs %}
+                            {{ para }}
+                            {% if not loop.last %}<br><br>{% endif %}
+                        {% endfor %}
+                    {% else %}
+                        Synopsis not available
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+
+            <!-- Episodes -->
+            {% if anime.episodeList %}
+            <div class="episodes-section">
+                <div class="section-header">
+                    <h2 class="section-title">Episodes</h2>
+                </div>
+                <div class="episodes-grid">
+                    {% for episode in anime.episodeList %}
+                    <div class="episode-item" onclick="window.location.href='/episode/{{ episode.episodeId }}'">
+                        <div class="episode-number">
+                            <i class="fas fa-play-circle"></i> {{ episode.eps }}
+                        </div>
+                        <div class="episode-date">{{ episode.date }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Recommendations -->
+            {% if anime.recommendedAnimeList %}
+            <div class="recommendations-section">
+                <div class="section-header">
+                    <h2 class="section-title">You Might Also Like</h2>
+                </div>
+                <div class="recommendations-grid">
+                    {% for rec in anime.recommendedAnimeList %}
+                    <div class="recommendation-item" onclick="window.location.href='/anime/{{ rec.animeId }}'">
+                        <div class="recommendation-poster">
+                            <img src="{{ rec.poster }}" alt="{{ rec.title }}" loading="lazy">
+                        </div>
+                        <div class="recommendation-info">
+                            <div class="recommendation-title">{{ rec.title }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </section>
+        
+    {% else %}
+        <div style="text-align: center; padding: 4rem 2rem;">
+            <h3 style="color: var(--text-primary); margin-bottom: 1rem;">
+                <i class="fas fa-exclamation-triangle"></i> Error Loading Anime Details
+            </h3>
+            <p style="color: var(--text-secondary);">
+                {{ data.message if data else 'Unable to fetch anime data. Please try again later.' }}
+            </p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Pass anime data to JavaScript for bookmark and share systems -->
+{% if data and data.status == 'success' %}
+<script>
+// Prepare anime data for bookmark and share systems
+window.animeData = {
+    animeId: {{ anime_id|tojson }},
+    title: {{ data.data.title|tojson }},
+    poster: {{ data.data.poster|tojson }},
+    score: {{ data.data.score|tojson if data.data.score else 'null' }},
+    type: {{ data.data.type|tojson if data.data.type else 'null' }},
+    status: {{ data.data.status|tojson if data.data.status else 'null' }}
+};
+
+console.log('Anime Data loaded:', window.animeData);
+</script>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- Load Bookmark System -->
+<script src="{{ url_for('static', filename='js/bookmark.js') }}"></script>
+<!-- Load Share System -->
+<script src="{{ url_for('static', filename='js/share-system.js') }}"></script>
+{% endblock %}
