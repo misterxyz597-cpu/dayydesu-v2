@@ -490,6 +490,104 @@ def api_genre_detail(genre_id):
     data = fetch_api(f'/anime/genre/{genre_id}', 'genre')
     return jsonify(data)
 
+
+# ============ HISTORY (per-user, session-based) ============
+def get_user_id():
+    user = session.get('user')
+    return user.get('sub') if user else None
+
+# In-memory store: {user_id: [history_items]}
+USER_HISTORY = {}
+USER_COMMENTS = {}  # {anime_id: [{user, rating, comment, time}]}
+
+@app.route('/history')
+@login_required
+def history_page():
+    uid = get_user_id()
+    items = USER_HISTORY.get(uid, [])
+    return render_template('history.html', history=items)
+
+@app.route('/api/history', methods=['GET'])
+@login_required
+def api_get_history():
+    uid = get_user_id()
+    return jsonify({'status': 'success', 'data': USER_HISTORY.get(uid, [])})
+
+@app.route('/api/history/add', methods=['POST'])
+@login_required
+def api_add_history():
+    uid = get_user_id()
+    body = request.get_json() or {}
+    episode_id   = body.get('episode_id')
+    episode_title = body.get('episode_title', '')
+    anime_id     = body.get('anime_id', '')
+    anime_title  = body.get('anime_title', '')
+    poster       = body.get('poster', '')
+    if not episode_id:
+        return jsonify({'status': 'error', 'message': 'episode_id required'}), 400
+    if uid not in USER_HISTORY:
+        USER_HISTORY[uid] = []
+    # Remove duplicate
+    USER_HISTORY[uid] = [h for h in USER_HISTORY[uid] if h.get('episode_id') != episode_id]
+    USER_HISTORY[uid].insert(0, {
+        'episode_id':    episode_id,
+        'episode_title': episode_title,
+        'anime_id':      anime_id,
+        'anime_title':   anime_title,
+        'poster':        poster,
+        'watched_at':    datetime.now().strftime('%Y-%m-%d %H:%M')
+    })
+    USER_HISTORY[uid] = USER_HISTORY[uid][:100]  # max 100
+    return jsonify({'status': 'success'})
+
+@app.route('/api/history/clear', methods=['POST'])
+@login_required
+def api_clear_history():
+    uid = get_user_id()
+    USER_HISTORY[uid] = []
+    return jsonify({'status': 'success'})
+
+# ============ KOMENTAR & RATING ============
+@app.route('/api/comments/<anime_id>', methods=['GET'])
+def api_get_comments(anime_id):
+    comments = USER_COMMENTS.get(anime_id, [])
+    return jsonify({'status': 'success', 'data': comments})
+
+@app.route('/api/comments/<anime_id>', methods=['POST'])
+@login_required
+def api_post_comment(anime_id):
+    user = session.get('user')
+    body = request.get_json() or {}
+    comment = body.get('comment', '').strip()
+    rating  = body.get('rating', 0)
+    if not comment:
+        return jsonify({'status': 'error', 'message': 'Komentar tidak boleh kosong'}), 400
+    try:
+        rating = max(1, min(10, int(rating)))
+    except:
+        rating = 0
+    if anime_id not in USER_COMMENTS:
+        USER_COMMENTS[anime_id] = []
+    # Hapus komentar lama dari user yang sama
+    USER_COMMENTS[anime_id] = [c for c in USER_COMMENTS[anime_id] if c.get('user_sub') != user.get('sub')]
+    USER_COMMENTS[anime_id].insert(0, {
+        'user_sub':   user.get('sub'),
+        'user_name':  user.get('name'),
+        'user_pic':   user.get('picture'),
+        'comment':    comment,
+        'rating':     rating,
+        'posted_at':  datetime.now().strftime('%Y-%m-%d %H:%M')
+    })
+    return jsonify({'status': 'success'})
+
+@app.route('/api/comments/<anime_id>/delete', methods=['POST'])
+@login_required
+def api_delete_comment(anime_id):
+    user = session.get('user')
+    if anime_id in USER_COMMENTS:
+        USER_COMMENTS[anime_id] = [c for c in USER_COMMENTS[anime_id] if c.get('user_sub') != user.get('sub')]
+    return jsonify({'status': 'success'})
+
 # Vercel needs this
 if __name__ == '__main__':
     app.run(debug=True)
