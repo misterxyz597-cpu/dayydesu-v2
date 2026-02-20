@@ -10,13 +10,19 @@ from io import BytesIO
 # pip install authlib
 from authlib.integrations.flask_client import OAuth
 
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY')
+app.secret_key = os.environ.get('SECRET_KEY', 'dayydesu-secret-key-2024!')
+
+# Fix HTTPS redirect URI di Railway/production
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+app.config['PREFERRED_URL_SCHEME'] = 'https'
 API_BASE = "https://www.sankavollerei.com"
 
 # ============ GOOGLE OAUTH ============
-GOOGLE_CLIENT_ID     = os.environ.get('GOOGLE_CLIENT_ID')
-GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+GOOGLE_CLIENT_ID     = os.environ.get('GOOGLE_CLIENT_ID', '69561706021-08jeck9h7519dhajcbih6elme0nbichc.apps.googleusercontent.com')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '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')
 
 oauth = OAuth(app)
 google = oauth.register(
@@ -24,7 +30,10 @@ google = oauth.register(
     client_id=GOOGLE_CLIENT_ID,
     client_secret=GOOGLE_CLIENT_SECRET,
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={'scope': 'openid email profile'}
+    client_kwargs={
+        'scope': 'openid email profile',
+        'token_endpoint_auth_method': 'client_secret_post'
+    }
 )
 
 def login_required(f):
@@ -43,22 +52,33 @@ def login():
 
 @app.route('/login/google')
 def login_google():
-    redirect_uri = url_for('auth_callback', _external=True)
-    return google.authorize_redirect(redirect_uri)
+    try:
+        redirect_uri = url_for('auth_callback', _external=True, _scheme='https')
+        return google.authorize_redirect(redirect_uri)
+    except Exception as e:
+        print(f"OAuth redirect error: {e}")
+        return f"Login error: {str(e)}", 500
 
 @app.route('/auth/callback')
 def auth_callback():
-    token     = google.authorize_access_token()
-    user_info = token.get('userinfo')
-    if user_info:
-        session['user'] = {
-            'name'   : user_info.get('name'),
-            'email'  : user_info.get('email'),
-            'picture': user_info.get('picture'),
-            'sub'    : user_info.get('sub'),
-        }
-        return redirect(url_for('index'))
-    return redirect(url_for('login'))
+    try:
+        token     = google.authorize_access_token()
+        user_info = token.get('userinfo')
+        if not user_info:
+            resp = google.get('https://openidconnect.googleapis.com/v1/userinfo')
+            user_info = resp.json()
+        if user_info:
+            session['user'] = {
+                'name'   : user_info.get('name'),
+                'email'  : user_info.get('email'),
+                'picture': user_info.get('picture'),
+                'sub'    : user_info.get('sub'),
+            }
+            return redirect(url_for('index'))
+        return redirect(url_for('login'))
+    except Exception as e:
+        print(f"OAuth callback error: {e}")
+        return f"Callback error: {str(e)}", 500
 
 @app.route('/logout')
 def logout():
