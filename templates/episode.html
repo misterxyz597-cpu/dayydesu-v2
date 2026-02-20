@@ -1237,14 +1237,13 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============ AUTO SAVE HISTORY ============
 (function() {
     {% if data and data.status == 'success' %}
-    {% set episode = data.data %}
+    {% set ep = data.data %}
+    // Gunakan data langsung dari struktur API episode
     const episodeId    = "{{ episode_id }}";
-    const episodeTitle = "{{ episode.title }}";
-    // animeId dari episodeId: ambil bagian sebelum "-episode-"
-    const animeId      = "{{ episode.info.animeId if episode.info and episode.info.animeId is defined else '' }}" 
-                         || episodeId.replace(/-episode-.*$/, '');
-    const animeTitle   = "{{ episode.info.animeTitle if episode.info and episode.info.animeTitle is defined else '' }}";
-    const poster       = "{{ episode.info.poster if episode.info and episode.info.poster is defined else '' }}";
+    const episodeTitle = "{{ ep.title }}";
+    const animeId      = "{{ ep.animeId }}";   // tersedia langsung di data.animeId
+    const animeTitle   = "";   // akan di-fetch otomatis oleh backend
+    const poster       = "";   // tidak ada di API episode, backend fetch dari /anime/{animeId}
 
     {% if session.get('user') %}
     fetch('/api/history/add', {
