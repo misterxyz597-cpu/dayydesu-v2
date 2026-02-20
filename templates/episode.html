@@ -1236,11 +1236,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ============ AUTO SAVE HISTORY ============
 (function() {
+    {% if data and data.status == 'success' %}
+    {% set episode = data.data %}
     const episodeId    = "{{ episode_id }}";
-    const episodeTitle = "{{ data.data.title if data and data.status == 'success' else '' }}";
-    const animeId      = "{{ data.data.animeId if data and data.status == 'success' and data.data.animeId is defined else '' }}";
-    const animeTitle   = "{{ data.data.animeTitle if data and data.status == 'success' and data.data.animeTitle is defined else '' }}";
-    const poster       = "{{ data.data.poster if data and data.status == 'success' and data.data.poster is defined else '' }}";
+    const episodeTitle = "{{ episode.title }}";
+    // animeId dari episodeId: ambil bagian sebelum "-episode-"
+    const animeId      = "{{ episode.info.animeId if episode.info and episode.info.animeId is defined else '' }}" 
+                         || episodeId.replace(/-episode-.*$/, '');
+    const animeTitle   = "{{ episode.info.animeTitle if episode.info and episode.info.animeTitle is defined else '' }}";
+    const poster       = "{{ episode.info.poster if episode.info and episode.info.poster is defined else '' }}";
 
     {% if session.get('user') %}
     fetch('/api/history/add', {
@@ -1254,6 +1258,7 @@ document.addEventListener('DOMContentLoaded', function() {
             poster:        poster
         })
     }).catch(()=>{});
+    {% endif %}
     {% endif %}
 })();
 
@@ -1272,7 +1277,7 @@ async function submitComment() {
     const comment = document.getElementById('commentInput')?.value?.trim();
     const rating  = parseInt(document.getElementById('ratingInput')?.value || 0);
     if (!comment) { alert('Komentar tidak boleh kosong!'); return; }
-    const animeId = "{{ data.data.animeId if data and data.status == 'success' and data.data.animeId is defined else episode_id }}";
+    const animeId = ("{{ episode.info.animeId if episode.info and episode.info.animeId is defined else '' }}" || "{{ episode_id }}").replace(/-episode-.*$/, '');
     const res = await fetch('/api/comments/' + animeId, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -1289,7 +1294,7 @@ async function submitComment() {
 }
 
 async function loadComments() {
-    const animeId = "{{ data.data.animeId if data and data.status == 'success' and data.data.animeId is defined else episode_id }}";
+    const animeId = ("{{ episode.info.animeId if data and data.status == 'success' and episode.info is defined and episode.info.animeId is defined else '' }}" || "{{ episode_id }}").replace(/-episode-.*$/, '');
     const myId    = "{{ session.user.sub if session.get('user') else '' }}";
     const res  = await fetch('/api/comments/' + animeId);
     const data = await res.json();
@@ -1319,7 +1324,7 @@ async function loadComments() {
 
 async function deleteComment() {
     if (!confirm('Hapus komentar kamu?')) return;
-    const animeId = "{{ data.data.animeId if data and data.status == 'success' and data.data.animeId is defined else episode_id }}";
+    const animeId = ("{{ episode.info.animeId if episode.info and episode.info.animeId is defined else '' }}" || "{{ episode_id }}").replace(/-episode-.*$/, '');
     await fetch('/api/comments/' + animeId + '/delete', { method: 'POST' });
     loadComments();
 }
