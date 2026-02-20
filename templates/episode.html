@@ -1236,28 +1236,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ============ AUTO SAVE HISTORY ============
 (function() {
-    {% if data and data.status == 'success' %}
-    {% set ep = data.data %}
-    // Gunakan data langsung dari struktur API episode
-    const episodeId    = "{{ episode_id }}";
-    const episodeTitle = "{{ ep.title }}";
-    const animeId      = "{{ ep.animeId }}";   // tersedia langsung di data.animeId
-    const animeTitle   = "";   // akan di-fetch otomatis oleh backend
-    const poster       = "";   // tidak ada di API episode, backend fetch dari /anime/{animeId}
-
-    {% if session.get('user') %}
+    {% if session.get('user') and data and data.status == 'success' %}
     fetch('/api/history/add', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-            episode_id:    episodeId,
-            episode_title: episodeTitle,
-            anime_id:      animeId,
-            anime_title:   animeTitle,
-            poster:        poster
+            episode_id:    "{{ episode_id }}",
+            episode_title: "{{ data.data.title | e }}",
+            anime_id:      "{{ data.data.animeId | e }}",
+            anime_title:   "",
+            poster:        ""
         })
     }).catch(()=>{});
-    {% endif %}
     {% endif %}
 })();
 
@@ -1276,7 +1266,7 @@ async function submitComment() {
     const comment = document.getElementById('commentInput')?.value?.trim();
     const rating  = parseInt(document.getElementById('ratingInput')?.value || 0);
     if (!comment) { alert('Komentar tidak boleh kosong!'); return; }
-    const animeId = ("{{ episode.info.animeId if episode.info and episode.info.animeId is defined else '' }}" || "{{ episode_id }}").replace(/-episode-.*$/, '');
+    const animeId = "{{ data.data.animeId | e }}" || "{{ episode_id }}";
     const res = await fetch('/api/comments/' + animeId, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -1293,7 +1283,7 @@ async function submitComment() {
 }
 
 async function loadComments() {
-    const animeId = ("{{ episode.info.animeId if data and data.status == 'success' and episode.info is defined and episode.info.animeId is defined else '' }}" || "{{ episode_id }}").replace(/-episode-.*$/, '');
+    const animeId = "{{ data.data.animeId | e }}" || "{{ episode_id }}";
     const myId    = "{{ session.user.sub if session.get('user') else '' }}";
     const res  = await fetch('/api/comments/' + animeId);
     const data = await res.json();
@@ -1323,7 +1313,7 @@ async function loadComments() {
 
 async function deleteComment() {
     if (!confirm('Hapus komentar kamu?')) return;
-    const animeId = ("{{ episode.info.animeId if episode.info and episode.info.animeId is defined else '' }}" || "{{ episode_id }}").replace(/-episode-.*$/, '');
+    const animeId = "{{ data.data.animeId | e }}" || "{{ episode_id }}";
     await fetch('/api/comments/' + animeId + '/delete', { method: 'POST' });
     loadComments();
 }
